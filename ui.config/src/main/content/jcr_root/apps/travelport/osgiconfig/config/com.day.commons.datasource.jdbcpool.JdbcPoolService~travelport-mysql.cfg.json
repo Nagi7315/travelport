@@ -1,0 +1,7 @@
+{
+  "datasource.name":"travelport_datasource",
+  "jdbc.driver.class":"com.mysql.jdbc.Driver",
+  "jdbc.username":"root",
+  "jdbc.connection.uri":"jdbc:mysql://localhost:3306/travelport",
+  "jdbc.password":"root"
+}

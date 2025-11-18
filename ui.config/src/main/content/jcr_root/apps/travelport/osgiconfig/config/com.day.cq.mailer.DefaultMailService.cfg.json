@@ -1,0 +1,9 @@
+{
+  "smtp.password":"rveu piuo bjaj bcki",
+  "debug.email":true,
+  "smtp.port:Integer":587,
+  "smtp.user":"jvnreddy7315@gmail.com",
+  "smtp.starttls":true,
+  "from.address":"jvnreddy7315@gmail.com",
+  "smtp.host":"smtp.gmail.com"
+}

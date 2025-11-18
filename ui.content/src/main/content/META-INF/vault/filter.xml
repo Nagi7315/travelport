@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workspaceFilter version="1.0">
+    <filter root="/conf/travelport" mode="merge"/>
+    <filter root="/content/travelport" mode="merge"/>
+    <filter root="/content/dam/travelport" mode="merge">
+        <exclude pattern="/content/dam/travelport(/.*)?"/>
+        <include pattern="/content/dam/travelport/jcr:content(/.*)?"/>
+    </filter>
+    <filter root="/content/dam/travelport/asset.jpg" mode="merge"/>
+    <filter root="/content/experience-fragments/travelport" mode="merge"/>
+    <filter root="/content/dam/formsanddocuments-themes/travelport" mode="merge"/>
+    <filter root="/content/dam/formsanddocuments-fdm/travelport" mode="merge"/>
+    <filter root="/content/dam/travelport/sample_logo.png" mode="merge"/>
+    <filter root="/content/dam/travelport/sample_terms.png" mode="merge"/>
+</workspaceFilter>
