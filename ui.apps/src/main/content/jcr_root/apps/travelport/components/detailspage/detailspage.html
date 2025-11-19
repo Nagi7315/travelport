@@ -79,7 +79,7 @@
                     <p class="text-sm text-gray-500">Use the latest calculations below to make your decision. Inputs are captured per stage.</p>
                 </div>
                 <div class="text-sm text-gray-600">
-                    <span class="font-semibold">Trigger Rules:</span> Max Product &gt; 80% → Approver 1 · Blended &gt; 60% → Approver 1 & 2
+                    <span class="font-semibold">Approval Rules:</span> Max Product &gt; 80% → Approver 1 · Blended &gt; 60% → Approver 1 & 2
                 </div>
             </div>
 
@@ -115,8 +115,8 @@
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                        <button id="approver1-approve-btn"  data-approver="approver1"  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver1', 'approve')" disabled>Approve</button>
-                        <button id="approver1-reject-btn"  data-approver="approver1"  class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver1', 'reject')" disabled>Reject</button>
+                        <button id="approver1-approve-btn"  data-approver="approver1"  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver1', 'approve','John Wick')" disabled>Approve</button>
+                        <button id="approver1-reject-btn"  data-approver="approver1"  class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver1', 'reject','John Wick')" disabled>Reject</button>
                         <p id="approver1-message" class="text-sm text-gray-500 flex-1">No action taken.</p>
                     </div>
                 </div>
@@ -152,8 +152,8 @@
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                        <button id="approver2-approve-btn"  data-approver="approver2"  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver2', 'approve')" disabled>Approve</button>
-                        <button id="approver2-reject-btn"  data-approver="approver2" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver2', 'reject')" disabled>Reject</button>
+                        <button id="approver2-approve-btn"  data-approver="approver2"  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver2', 'approve','Keven Smith')" disabled>Approve</button>
+                        <button id="approver2-reject-btn"  data-approver="approver2" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver2', 'reject','Keven Smith')" disabled>Reject</button>
                         <p id="approver2-message" class="text-sm text-gray-500 flex-1">No action taken.</p>
                     </div>
                 </div>

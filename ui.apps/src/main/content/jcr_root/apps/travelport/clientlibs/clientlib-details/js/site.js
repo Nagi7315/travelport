@@ -178,7 +178,7 @@ function disableApprover(id) {
 }
 
 /* -------------------- LOAD SUBMISSION DATA -------------------- */
-
+let currentBlendedDiscount = 0;
 async function loadSubmittedData() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -204,7 +204,7 @@ async function loadSubmittedData() {
         const allItems = [...home, ...branch];
         const maxDisc = calculateMaxDiscount(allItems);
         const blendedDisc = calculateBlendedDiscount(allItems);
-
+        currentBlendedDiscount = blendedDisc
         document.getElementById("approver1-max").textContent = maxDisc + "%";
         document.getElementById("approver1-blended").textContent = blendedDisc + "%";
 
@@ -228,39 +228,72 @@ const getCsrfToken = async () => {
 };
 
 
-async function handleApprovalAction(approver, action) {
+async function handleApprovalAction(approver, action,name) {
     const urlParams = new URLSearchParams(window.location.search);
     const formId = urlParams.get("formId");
 
-    // Get comments and decision date from input fields
     const comments = document.getElementById(`${approver}-name`).value || "";
     const decisionDateInput = document.getElementById(`${approver}-date`);
     const decisionDate = decisionDateInput.value || new Date().toISOString().split('T')[0];
 
     const csrfToken = await getCsrfToken();
 
-    // Create normal JS object payload
-    const payload = {
+    // Determine if two approvals are required
+    const blendedDisc = parseFloat(document.getElementById("approver1-blended").textContent);
+
+    let payload = {
         pagePath: "/content/travelport/us/en/forms-info",
         id: formId,
         approver,
-        action: action.toUpperCase(), // "APPROVE" or "REJECT"
+        action: action.toUpperCase(),
         comments,
-        decisionDate
+        decisionDate,
+        approverName:name
     };
+
+    if (approver === "approver1") {
+        // First approver
+        if (blendedDisc < 60) {
+            payload.approver2 = "NA";   // Only one approver
+        } else {
+            payload.approver2 = "Pending"; // Two approvers
+        }
+    }
+    // Approver 2 payload does NOT include approver2 key
 
     try {
         const res = await fetch("/bin/form/approve", {
             method: "POST",
             headers: {
                 "CSRF-Token": csrfToken,
-                 "Content-Type": "application/json" 
-                }, // send JSON
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify(payload)
         });
 
         const json = await res.json();
         console.log("Approval servlet response:", json);
+
+        // Hide other approver card if finalStatus is REJECTED or APPROVED_FINAL
+        const approver1Card = document.getElementById("approver1-card");
+        const approver2Card = document.getElementById("approver2-card");
+        const gridContainer = document.querySelector(".grid.grid-cols-1.lg\\:grid-cols-2");
+
+        if (json.finalStatus === "REJECTED" || json.finalStatus === "APPROVED_FINAL") {
+            if (approver === "approver1") {
+                approver2Card.style.display = "none";
+            } else {
+                approver1Card.style.display = "none";
+            }
+            // Adjust grid layout to single column
+            gridContainer.classList.remove("lg:grid-cols-2");
+            gridContainer.classList.add("lg:grid-cols-1");
+        } else if (json.finalStatus === "PENDING_APPROVER2") {
+            // Show second approver card
+            approver2Card.style.display = "block";
+            gridContainer.classList.remove("lg:grid-cols-1");
+            gridContainer.classList.add("lg:grid-cols-2");
+        }
 
         updateApproverUI(approver, action);
     } catch (e) {
@@ -269,11 +302,12 @@ async function handleApprovalAction(approver, action) {
 }
 
 
+
 function updateApproverUI(approver, action) {
 
     const msg = document.getElementById(`${approver}-message`);
-
-    msg.textContent = action === "APPROVE"
+ 
+    msg.textContent = action === "approve"
         ? "Approved successfully."
         : "Rejected.";
 

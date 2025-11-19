@@ -69,6 +69,7 @@ public class FormApproveServlet extends SlingAllMethodsServlet {
         String action = jsonObject.get("action").getAsString();
         String comments = jsonObject.has("comments") ? jsonObject.get("comments").getAsString() : "";
         String decisionDateStr = jsonObject.has("decisionDate") ? jsonObject.get("decisionDate").getAsString() : null;
+        String approver2Field = jsonObject.has("approver2") ? jsonObject.get("approver2").getAsString() : null;
 
         try (ResourceResolver rr = request.getResourceResolver()) {
 
@@ -104,23 +105,36 @@ public class FormApproveServlet extends SlingAllMethodsServlet {
 
             Calendar now = Calendar.getInstance();
 
+            // Handle APPROVE action
             if ("APPROVE".equalsIgnoreCase(action)) {
                 ap.put("status", "APPROVED");
                 ap.put("comments", comments);
                 ap.put("actionedOn", now);
                 if (decisionDate != null) ap.put("decisionDate", decisionDate);
 
+                // Single vs two approver logic
                 if ("approver1".equalsIgnoreCase(approver)) {
-                    subProps.put("status", "PENDING_APPROVER2");
-                    Resource a2 = submission.getChild("approvers/approver2");
-                    if (a2 != null) {
-                        a2.adaptTo(ModifiableValueMap.class).put("status", "PENDING");
+                    if ("NA".equalsIgnoreCase(approver2Field)) {
+                        // Only one approver
+                        subProps.put("status", "APPROVED_FINAL");
+                    } else if ("Pending".equalsIgnoreCase(approver2Field)) {
+                        // Two approvers
+                        subProps.put("status", "PENDING_APPROVER2");
+                        Resource a2 = submission.getChild("approvers/approver2");
+                        if (a2 != null) {
+                            a2.adaptTo(ModifiableValueMap.class).put("status", "PENDING");
+                        }
+                    } else {
+                        // fallback
+                        subProps.put("status", "APPROVED_FINAL");
                     }
-                } else {
+                } else if ("approver2".equalsIgnoreCase(approver)) {
+                    // Second approver approves → final
                     subProps.put("status", "APPROVED_FINAL");
                 }
 
             } else if ("REJECT".equalsIgnoreCase(action)) {
+                // Handle REJECT action
                 ap.put("status", "REJECTED");
                 ap.put("comments", comments);
                 ap.put("actionedOn", now);
@@ -147,5 +161,4 @@ public class FormApproveServlet extends SlingAllMethodsServlet {
             response.getWriter().write(out.toString());
         }
     }
-
 }

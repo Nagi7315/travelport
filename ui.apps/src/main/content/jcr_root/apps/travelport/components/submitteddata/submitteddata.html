@@ -4,7 +4,7 @@
     <div class="submissions-container">
         
         <!-- Header -->
-        <h1 class="submissions-header">Submission Records</h1>
+        <h1 class="submissions-header">Submitted Records</h1>
 
         <!-- Table Wrapper -->
         <div class="table-wrapper">
@@ -24,18 +24,19 @@
                 </thead>
                 <tbody>
                     <tr data-sly-repeat.data="${model.dataList}">
-                        <td>Test</td>
+                        <td>Arjun</td>
                         <td data-date>${data.submittedDate}</td>
                         
                         <td>${data.status}</td>
                         <td>${data.inititor}</td>
                         <td>
-                            <ul>
-                                <li data-sly-repeat.approver="${data.approvers}">${approver}</li>
+                            <ul class="no-bullets">
+                                <li>John Wick ,</li>
+                                <li>Keven Smith</li>
                             </ul>
                         </td>
                         <td>
-                            <ul>
+                            <ul class="no-bullets">
                                 <li data-sly-repeat.approvedUser="${data.approved}">${approvedUser}</li>
                             </ul>
                         </td>
