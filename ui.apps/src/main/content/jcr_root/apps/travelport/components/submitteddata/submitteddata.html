@@ -1,0 +1,65 @@
+<sly data-sly-use.model="com.travelport.core.models.SubmittedDataModel"/>
+
+<div class="cmp-submissions-list">
+    <div class="submissions-container">
+        
+        <!-- Header -->
+        <h1 class="submissions-header">Submission Records</h1>
+
+        <!-- Table Wrapper -->
+        <div class="table-wrapper">
+            <table class="submissions-table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Submitted Date</th>
+                        
+                        <th>Status</th>
+                        <th>Initiator</th>
+                        <th>Approvers</th>
+                        <th>Approved</th>
+                        <th>Pending Approval</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-sly-repeat.data="${model.dataList}">
+                        <td>Test</td>
+                        <td data-date>${data.submittedDate}</td>
+                        
+                        <td>${data.status}</td>
+                        <td>${data.inititor}</td>
+                        <td>
+                            <ul>
+                                <li data-sly-repeat.approver="${data.approvers}">${approver}</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li data-sly-repeat.approvedUser="${data.approved}">${approvedUser}</li>
+                            </ul>
+                        </td>
+                        <td>${data.pendingApprovalFrom}</td>
+                        
+                         <td class="text-center">
+                            <a href="${data.editlink}" class="btn btn-edit">Edit</a>
+                            <a href="${data.detailViewLink}" class="btn btn-view">View</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" data-sly-test="${data.submissions.size == 0}">
+            <p>No submissions found.</p>
+        </div>
+
+    </div>
+
+    <!-- Load ClientLibs -->
+    <sly data-sly-use.clientLib="${'/libs/granite/sightly/templates/clientlib.html'}"/>
+    <sly data-sly-call="${clientLib.css @ categories='travelport.submissions'}"/>
+    <sly data-sly-call="${clientLib.js @ categories='travelport.submissions'}"/>
+</div>
+

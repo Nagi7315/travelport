@@ -1,0 +1,168 @@
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Approver Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f7fb;
+        }
+        .form-container {
+            max-width: 1100px;
+        }
+        .table-header th {
+            background-color: #e5e7eb;
+            font-weight: 600;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        .table-row td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+        .readonly-chip {
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: #e5e7eb;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<div class="p-4 sm:p-8">
+    <div class="form-container mx-auto bg-white shadow-2xl rounded-2xl p-6 sm:p-10">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Approver Review Workspace</h1>
+                <p class="text-gray-500 text-sm mt-1">View customer pricing submissions, confirm routing triggers, and capture approval decisions.</p>
+            </div>
+        </div>
+       
+
+        <!-- Home Location -->
+        <div class="form-section border-l-4 border-indigo-600 bg-gray-50 rounded-xl p-5 mb-8">
+            <h2 id="home-title" class="text-2xl font-semibold text-gray-900 mb-2">Home Location</h2>
+            <p id="home-summary" class="text-sm text-gray-600 mb-4">—</p>
+            <div id="home-table-container"></div>
+        </div>
+
+        <!-- Branch Locations -->
+        <div class="form-section border-l-4 border-amber-500 bg-gray-50 rounded-xl p-5 mb-8">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-2xl font-semibold text-gray-900">Branch Locations</h2>
+                <span id="branch-count-chip" class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold">0 Branches</span>
+            </div>
+            <div id="branch-locations-container" class="space-y-6">
+                <div class="text-sm text-gray-500">Select a case to load the submitted branch configurations.</div>
+            </div>
+        </div>
+
+        <!-- Approvals -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-900">Approval Routing Deck</h2>
+                    <p class="text-sm text-gray-500">Use the latest calculations below to make your decision. Inputs are captured per stage.</p>
+                </div>
+                <div class="text-sm text-gray-600">
+                    <span class="font-semibold">Trigger Rules:</span> Max Product &gt; 80% → Approver 1 · Blended &gt; 60% → Approver 1 & 2
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Approver 1 -->
+                <div id="approver1-card" class="border border-gray-200 rounded-lg p-5 bg-gray-50">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">John Wick</h3>
+                            <p class="text-sm text-gray-500">Initial routing for high discount thresholds.</p>
+                        </div>
+                        <span id="approver1-status" class="badge bg-gray-200 text-gray-700">Not Required</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-700 bg-white border border-gray-200 rounded-lg p-4 mb-3">
+                        <div>
+                            <p class="text-gray-500">Max Product Discount</p>
+                            <p id="approver1-max" class="font-semibold text-gray-900">0.00%</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Blended Discount</p>
+                            <p id="approver1-blended" class="font-semibold text-gray-900">0.00%</p>
+                        </div>
+                    </div>
+                    <p id="approver1-trigger" class="text-sm text-gray-500 mb-4">Awaiting routing trigger.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Comments</label>
+                            <input id="approver1-name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add comments" disabled>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Decision Date</label>
+                            <input id="approver1-date" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" disabled>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <button id="approver1-approve-btn"  data-approver="approver1"  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver1', 'approve')" disabled>Approve</button>
+                        <button id="approver1-reject-btn"  data-approver="approver1"  class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver1', 'reject')" disabled>Reject</button>
+                        <p id="approver1-message" class="text-sm text-gray-500 flex-1">No action taken.</p>
+                    </div>
+                </div>
+
+                <!-- Approver 2 -->
+                <div id="approver2-card" class="border border-gray-200 rounded-lg p-5 bg-gray-50">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Keven smith</h3>
+                            <p class="text-sm text-gray-500">Activated for extreme blended discounts.</p>
+                        </div>
+                        <span id="approver2-status" class="badge bg-gray-200 text-gray-700">Not Required</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-700 bg-white border border-gray-200 rounded-lg p-4 mb-3">
+                        <div>
+                            <p class="text-gray-500">Max Product Discount</p>
+                            <p id="approver2-max" class="font-semibold text-gray-900">0.00%</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Blended Discount</p>
+                            <p id="approver2-blended" class="font-semibold text-gray-900">0.00%</p>
+                        </div>
+                    </div>
+                    <p id="approver2-trigger" class="text-sm text-gray-500 mb-4">Awaiting routing trigger.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Comments</label>
+                            <input id="approver2-name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add comments" disabled>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Decision Date</label>
+                            <input id="approver2-date" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" disabled>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <button id="approver2-approve-btn"  data-approver="approver2"  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver2', 'approve')" disabled>Approve</button>
+                        <button id="approver2-reject-btn"  data-approver="approver2" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver2', 'reject')" disabled>Reject</button>
+                        <p id="approver2-message" class="text-sm text-gray-500 flex-1">No action taken.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+       <!-- Load ClientLibs -->
+    <sly data-sly-use.clientLib="${'/libs/granite/sightly/templates/clientlib.html'}"/>
+    <sly data-sly-call="${clientLib.js @ categories='travelport.details'}"/>
+</div>

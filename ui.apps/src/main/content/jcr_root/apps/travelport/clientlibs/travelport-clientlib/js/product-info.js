@@ -1,437 +1,581 @@
-// --- Dynamic Product Fetching ---
 const fetchProducts = async (locationType) => {
-
-    try {
-        const response = await fetch(`/bin/products?location=${locationType}`);
-        const data = await response.json();
-        console.log(data,"testing")
-        if (data.products) {
-            return data.products.map(p => ({
-                name: p.product_name,
-                rate: p.rack_rate,
-                type: p.product_type
-            }));
-        }
-        return [];
-    } catch (error) {
-        console.error("Error fetching products:", error);
-        return [];
+  try {
+    const response = await fetch(`/bin/products?location=${locationType}`);
+    const data = await response.json();
+    if (data.products) {
+      return data.products.map((p) => ({
+        name: p.product_name,
+        rate: p.rack_rate,
+        type: p.product_type,
+      }));
     }
+    return [];
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
 };
 
-const getProductOptions = async (locationType) => {
-    const products = await fetchProducts(locationType);
-    return products.map(p => 
+const getProductOptions = async (locationType, selectedProducts = []) => {
+  const products = await fetchProducts(locationType);
+  const filtered = products.filter((p) => !selectedProducts.includes(p.name));
+  return filtered
+    .map(
+      (p) =>
         `<option value="${p.name}|${p.rate}|${p.type}">${p.name} (${p.type})</option>`
-    ).join('');
+    )
+    .join("");
 };
 
-// --- Helper function to format currency ---
 const formatCurrency = (amount) => {
-    if (amount == null || isNaN(amount)) return '0.00';
-    return amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (amount == null || isNaN(amount)) return "0.00";
+  return amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
+const showError = (msg) => {
+  const err = document.getElementById("form-error-msg");
+  err.textContent = msg;
+  err.classList.remove("hidden");
+};
 
-// --- Core Calculation Logic ---
+const hideError = () => {
+  const err = document.getElementById("form-error-msg");
+  err.textContent = "";
+  err.classList.add("hidden");
+};
+
 const calculateRow = (row) => {
-    const quantityInput = row.querySelector('.input-quantity');
-    const discountInput = row.querySelector('.input-discount');
-    const rackRateElement = row.querySelector('.input-rack-rate');
-    const totalAfterDiscountElement = row.querySelector('.total-after-discount');
+  const quantityInput = row.querySelector(".input-quantity");
+  const discountInput = row.querySelector(".input-discount");
+  const rackRateElement = row.querySelector(".input-rack-rate");
+  const totalAfterDiscountElement = row.querySelector(".total-after-discount");
 
-    const quantity = parseFloat(quantityInput.value || 0);
-    let discountPercent = parseFloat(discountInput.value || 0);
-    const rackRate = parseFloat(quantityInput.dataset.rackRate || 0);
+  const quantity = parseFloat(quantityInput.value || 0);
+  let discountPercent = parseFloat(discountInput.value || 0);
+  const rackRate = parseFloat(quantityInput.dataset.rackRate || 0);
 
-    if (discountPercent > 100) {
-        discountPercent = 100;
-        discountInput.value = 100;
-    }
+  if (discountPercent > 100) {
+    discountPercent = 100;
+    discountInput.value = 100;
+  }
 
-    const discountMultiplier = 1 - (discountPercent / 100);
-    const totalAfterDiscount = (rackRate * quantity) * discountMultiplier;
+  const discountMultiplier = 1 - discountPercent / 100;
+  const totalAfterDiscount = rackRate * quantity * discountMultiplier;
 
-    totalAfterDiscountElement.textContent = formatCurrency(totalAfterDiscount);
+  totalAfterDiscountElement.textContent = formatCurrency(totalAfterDiscount);
 
-    return {
-        rackTotal: rackRate * quantity,
-        discountedTotal: totalAfterDiscount,
-    };
+  return {
+    rackTotal: rackRate * quantity,
+    discountedTotal: totalAfterDiscount,
+  };
 };
 
-const calculateLocationTotals = (tableId, totalDiscountPercentId, totalAfterDiscountId) => {
-    const table = document.getElementById(tableId);
-    const rows = table.querySelectorAll('.table-row');
-    let totalRackValue = 0;
-    let totalDiscountedValue = 0;
-    let maxDiscount = 0;
+const calculateLocationTotals = (
+  tableId,
+  totalDiscountPercentId,
+  totalAfterDiscountId
+) => {
+  const table = document.getElementById(tableId);
+  const rows = table.querySelectorAll(".table-row");
 
-    rows.forEach(row => {
-        const results = calculateRow(row);
-        totalRackValue += results.rackTotal;
-        totalDiscountedValue += results.discountedTotal;
+  let totalRackValue = 0;
+  let totalDiscountedValue = 0;
+  let maxDiscount = 0;
 
-        const discountInput = row.querySelector('.input-discount');
-        const discountPercent = parseFloat(discountInput.value || 0);
-        if (discountPercent > maxDiscount) maxDiscount = discountPercent;
-    });
+  rows.forEach((row) => {
+    const results = calculateRow(row);
+    totalRackValue += results.rackTotal;
+    totalDiscountedValue += results.discountedTotal;
 
-    const totalDiscount = totalRackValue > 0 ? ((totalRackValue - totalDiscountedValue) / totalRackValue) * 100 : 0;
+    const discountPercent = parseFloat(
+      row.querySelector(".input-discount").value || 0
+    );
+    if (discountPercent > maxDiscount) maxDiscount = discountPercent;
+  });
 
-    document.getElementById(totalDiscountPercentId).textContent = formatCurrency(totalDiscount) + '%';
-    document.getElementById(totalAfterDiscountId).textContent = '£' + formatCurrency(totalDiscountedValue);
+  const totalDiscount =
+    totalRackValue > 0
+      ? ((totalRackValue - totalDiscountedValue) / totalRackValue) * 100
+      : 0;
 
-    return { totalRackValue, totalDiscountedValue, maxDiscount };
+  document.getElementById(totalDiscountPercentId).textContent =
+    formatCurrency(totalDiscount) + "%";
+  document.getElementById(totalAfterDiscountId).textContent =
+    "£" + formatCurrency(totalDiscountedValue);
+
+  return { totalRackValue, totalDiscountedValue, maxDiscount };
 };
 
 const calculateTotals = () => {
-    const homeTotals = calculateLocationTotals('home-product-table', 'home-total-discount-percent', 'home-total-after-discount');
-    const branchTotals = calculateLocationTotals('branch-product-table', 'branch-total-discount-percent', 'branch-total-after-discount');
+  const homeTotals = calculateLocationTotals(
+    "home-product-table",
+    "home-total-discount-percent",
+    "home-total-after-discount"
+  );
+  const branchTotals = calculateLocationTotals(
+    "branch-product-table",
+    "branch-total-discount-percent",
+    "branch-total-after-discount"
+  );
 
-    const totalRackValue = homeTotals.totalRackValue + branchTotals.totalRackValue;
-    const totalDiscountedValue = homeTotals.totalDiscountedValue + branchTotals.totalDiscountedValue;
-    const maxIndividualDiscount = Math.max(homeTotals.maxDiscount, branchTotals.maxDiscount);
+  const totalRackValue =
+    homeTotals.totalRackValue + branchTotals.totalRackValue;
+  const totalDiscountedValue =
+    homeTotals.totalDiscountedValue + branchTotals.totalDiscountedValue;
 
-    const blendedDiscount = totalRackValue > 0 ? ((totalRackValue - totalDiscountedValue) / totalRackValue) * 100 : 0;
-    document.getElementById('blended-discount').textContent = formatCurrency(blendedDiscount) + '%';
+  const blendedDiscount =
+    totalRackValue > 0
+      ? ((totalRackValue - totalDiscountedValue) / totalRackValue) * 100
+      : 0;
 
-    const alertBox = document.getElementById('workflow-alert');
-    if (maxIndividualDiscount > 80 || blendedDiscount > 60) {
-        alertBox.classList.remove('hidden');
-        let message = "⚠️ **Workflow Alert:** ";
-        if (maxIndividualDiscount > 80) {
-            message += "Individual Product Discount (" + formatCurrency(maxIndividualDiscount) + "%) exceeds 80%. **Routing to Approver 1.** ";
-        }
-        if (blendedDiscount > 60) {
-            message += "Blended Total Discount (" + formatCurrency(blendedDiscount) + "%) exceeds 60%. **Routing to Approver 1, then Approver 2.**";
-        }
-        alertBox.querySelector('p').innerHTML = message;
-    } else {
-        alertBox.classList.add('hidden');
+  document.getElementById("blended-discount").textContent =
+    formatCurrency(blendedDiscount) + "%";
+
+  // Workflow alert
+  const alertBox = document.getElementById("workflow-alert");
+  if (
+    homeTotals.maxDiscount > 80 ||
+    branchTotals.maxDiscount > 80 ||
+    blendedDiscount > 60
+  ) {
+    alertBox.classList.remove("hidden");
+
+    let message = "⚠️ <strong>Workflow Alert:</strong> ";
+    if (homeTotals.maxDiscount > 80 || branchTotals.maxDiscount > 80) {
+      message += `Individual Product Discount exceeds 80%. `;
     }
+    if (blendedDiscount > 60) {
+      message += `Blended Discount exceeds 60%.`;
+    }
+
+    alertBox.querySelector("p").innerHTML = message;
+  } else {
+    alertBox.classList.add("hidden");
+  }
 };
 
-// --- Dynamic Form Row Logic ---
 const addRowWithProduct = (tableId, product) => {
-    const tableBody = document.getElementById(tableId);
-    const newRow = document.createElement('tr');
-    newRow.classList.add('table-row');
+  const tableBody = document.getElementById(tableId);
 
-    const isFixed = product.type === 'FIXED';
+  const newRow = document.createElement("tr");
+  newRow.classList.add("table-row");
 
-    newRow.innerHTML = `
+  const isFixed = product.type === "FIXED";
+
+  newRow.innerHTML = `
         <td>
             <select class="input-product-name" onchange="updateRow(this)">
-                <option value="${product.name}|${product.rate}|${product.type}" selected>
+                <option selected value="${product.name}|${product.rate}|${
+    product.type
+  }">
                     ${product.name} (${product.type})
                 </option>
             </select>
         </td>
-        <td><input type="number" value="1" min="1" class="text-center input-quantity" data-rack-rate="${product.rate}" data-fixed="${isFixed}" ${!isFixed ? 'readonly' : ''} oninput="calculateTotals()"></td>
-        <td class="text-right read-only input-rack-rate">${formatCurrency(product.rate)}</td>
-        <td><input type="number" min="0" max="100" value="0" class="text-center input-discount" oninput="calculateTotals()"></td>
-        <td class="text-right font-semibold total-after-discount">0.00</td>
+        <td><input type="number" value="1" min="1"
+            class="input-quantity text-center"
+            data-rack-rate="${product.rate}"
+            data-fixed="${isFixed}"
+            ${!isFixed ? "readonly" : ""} oninput="calculateTotals()"></td>
+
+        <td class="input-rack-rate text-right">${formatCurrency(
+          product.rate
+        )}</td>
+
+        <td><input type="number" min="0" max="100" value="0"
+            class="input-discount text-center" oninput="calculateTotals()"></td>
+
+        <td class="total-after-discount text-right">0.00</td>
+
         <td><button onclick="removeRow(this)" class="text-red-600 hover:text-red-800 font-medium">Remove</button></td>
     `;
 
-    tableBody.appendChild(newRow);
-    calculateTotals();
+  tableBody.appendChild(newRow);
+  calculateTotals();
 };
 
-
 const addRow = async (tableId, locationType) => {
-    const tableBody = document.getElementById(tableId);
-    const optionsHtml = await getProductOptions(locationType);
+  const tableBody = document.getElementById(tableId);
 
-    const newRow = document.createElement('tr');
-    newRow.classList.add('table-row');
+  // Collect existing selections (to prevent duplicate options)
+  const currentSelections = [
+    ...tableBody.querySelectorAll(".input-product-name"),
+  ].map((sel) => sel.value.split("|")[0]);
 
-    newRow.innerHTML = `
+  const optionsHtml = await getProductOptions(locationType, currentSelections);
+
+  const newRow = document.createElement("tr");
+  newRow.classList.add("table-row");
+
+  newRow.innerHTML = `
         <td>
             <select class="input-product-name" onchange="updateRow(this)">
                 <option value="">Select Product...</option>
                 ${optionsHtml}
             </select>
         </td>
-        <td><input type="number" value="1" min="1" class="text-center input-quantity" data-rack-rate="0" data-fixed="false" oninput="calculateTotals()"></td>
-        <td class="text-right read-only input-rack-rate">0.00</td>
-        <td><input type="number" min="0" max="100" value="0" class="text-center input-discount" oninput="calculateTotals()"></td>
-        <td class="text-right font-semibold total-after-discount">0.00</td>
+        <td><input type="number" value="1" min="1" class="input-quantity text-center"
+            data-rack-rate="0" data-fixed="false" oninput="calculateTotals()"></td>
+
+        <td class="input-rack-rate text-right">0.00</td>
+
+        <td><input type="number" min="0" max="100" value="0"
+            class="input-discount text-center" oninput="calculateTotals()"></td>
+
+        <td class="total-after-discount text-right">0.00</td>
+
         <td><button onclick="removeRow(this)" class="text-red-600 hover:text-red-800 font-medium">Remove</button></td>
     `;
-    tableBody.appendChild(newRow);
-    calculateTotals();
+
+  tableBody.appendChild(newRow);
 };
-
-
 
 const removeRow = (button) => {
-    const row = button.closest('tr');
-    row.remove();
-    calculateTotals();
+  button.closest("tr").remove();
+  calculateTotals();
 };
 
-const updateRow = (selectElement) => {
-    const row = selectElement.closest('tr');
-    const parts = selectElement.value.split('|');
+const updateRow = async (selectElement) => {
+  const row = selectElement.closest("tr");
+  const tableId = row.parentElement.id;
 
-    if (parts.length === 3) {
-        const [name, rateStr, type] = parts;
-        const rackRate = parseFloat(rateStr);
-        const isFixed = type.toUpperCase() === "FIXED";
+  const parts = selectElement.value.split("|");
+  if (parts.length !== 3) return;
 
-        const quantityInput = row.querySelector('.input-quantity');
-        const rackRateElement = row.querySelector('.input-rack-rate');
+  const [name, rateStr, type] = parts;
+  const rate = parseFloat(rateStr);
+  const isFixed = type === "FIXED";
 
-        quantityInput.dataset.rackRate = rackRate;
-        quantityInput.dataset.fixed = isFixed;
-        rackRateElement.textContent = formatCurrency(rackRate);
+  const quantityInput = row.querySelector(".input-quantity");
+  const rackRateElement = row.querySelector(".input-rack-rate");
 
-        if (isFixed) {
-            quantityInput.removeAttribute('readonly');
-            quantityInput.classList.remove('read-only');
-        } else {
-            quantityInput.setAttribute('readonly', 'true');
-            quantityInput.classList.add('read-only');
-            quantityInput.value = 1;
-        }
-    } else {
-        row.querySelector('.input-quantity').dataset.rackRate = 0;
-        row.querySelector('.input-rack-rate').textContent = '0.00';
+  quantityInput.dataset.rackRate = rate;
+  quantityInput.dataset.fixed = isFixed;
+  rackRateElement.textContent = formatCurrency(rate);
+
+  if (isFixed) {
+    quantityInput.removeAttribute("readonly");
+  } else {
+    quantityInput.setAttribute("readonly", true);
+    quantityInput.value = 1;
+  }
+
+  // Re-filter available dropdown options
+  const table = document.getElementById(tableId);
+  const allSelected = [...table.querySelectorAll(".input-product-name")].map(
+    (s) => s.value.split("|")[0]
+  );
+
+  const locationType = tableId.includes("home") ? "HOME" : "BRANCH";
+
+  const optionsHtml = await getProductOptions(
+    locationType,
+    allSelected.filter((x) => x !== name)
+  );
+
+  // Rebuild dropdown but keep selected at top
+  selectElement.innerHTML = `
+        <option selected value="${name}|${rate}|${type}">
+            ${name} (${type})
+        </option>
+        ${optionsHtml}
+    `;
+
+  calculateTotals();
+};
+
+function formatSubmittedDate(rawDate) {
+    const date = new Date(rawDate);
+
+    if (isNaN(date.getTime())) {
+        console.warn("Invalid date:", rawDate);
+        return rawDate; // return original if parsing fails
     }
-    calculateTotals();
-};
+
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = date.toLocaleString("en-US", { month: "short" });
+    const year = date.getFullYear().toString().slice(-2);
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+
+    return `${day} ${month} ${year} ${hours}:${minutes}`;
+}
 
 
+// ===============================
+// FORM OPERATIONS
+// ===============================
 const collectTableData = (tableId) => {
-    const table = document.getElementById(tableId);
-    const rows = table.querySelectorAll('.table-row');
+  const table = document.getElementById(tableId);
+  const rows = table.querySelectorAll(".table-row");
 
-    const data = Array.from(rows).map(row => {
-        const productSelect = row.querySelector('.input-product-name');
-        const quantityInput = row.querySelector('.input-quantity');
-        const rackRateElement = row.querySelector('.input-rack-rate');
-        const discountInput = row.querySelector('.input-discount');
-        const totalAfterDiscountElement = row.querySelector('.total-after-discount');
+  let invalidProduct = false;
 
-        // Split the select value if product selected
-        let name = '', type = '', rate = 0;
-        if (productSelect.value) {
-            const parts = productSelect.value.split('|');
-            name = parts[0];
-            rate = parseFloat(parts[1]) || 0;
-            type = parts[2];
-        }
+  const products = [...rows].map((row) => {
+    const selectValue = row.querySelector(".input-product-name").value;
 
-        return {
-            product_name: name,
-            product_type: type,
-            quantity: parseFloat(quantityInput.value || 0),
-            rack_rate: rate,
-            discount_percent: parseFloat(discountInput.value || 0),
-            total_after_discount: parseFloat(totalAfterDiscountElement.textContent.replace(/,/g, '')) || 0
-        };
-    });
 
-    return data;
+    if (!selectValue) {
+      invalidProduct = true;
+      return null;
+    }
+
+    const parts = selectValue.split("|");
+
+    return {
+      product_name: parts[0],
+      product_type: parts[2],
+      quantity: parseFloat(row.querySelector(".input-quantity").value || 0),
+      rack_rate: parseFloat(parts[1] || 0),
+      discount_percent: parseFloat(
+        row.querySelector(".input-discount").value || 0
+      ),
+      total_after_discount:
+        parseFloat(
+          row
+            .querySelector(".total-after-discount")
+            .textContent.replace(/,/g, "")
+        ) || 0,
+    };
+  });
+
+  if (invalidProduct) {
+    throw new Error("Please select a product for every row before submitting.");
+  }
+
+  return products;
 };
 
 const getCsrfToken = async () => {
-    const response = await fetch("/libs/granite/csrf/token.json", {
-        credentials: "include"
-    });
-    const data = await response.json();
-    return data.token;
+  const response = await fetch("/libs/granite/csrf/token.json", {
+    credentials: "include",
+  });
+  const data = await response.json();
+  return data.token;
 };
 
-
+// ---------------------------
+// SUBMIT FORM
+// ---------------------------
 const submitForm = async () => {
-    const homeData = collectTableData('home-product-table');
-    const branchData = collectTableData('branch-product-table');
-    const csrfToken = await getCsrfToken();
+  hideError();
 
-    const payload = {
-         page_path: window.location.pathname,
-         products : {
-			home_products: homeData,
-        	branch_products: branchData
-		}
-    };
+  const customerName = document.getElementById("customerName").value.trim();
+  if (!customerName) {
+    showError("Customer name is required.");
+    return;
+  }
 
+ let homeData, branchData;
     try {
-        const response = await fetch('/bin/form/save', {
-            method: 'POST',
-            headers: {
-                "CSRF-Token": csrfToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
+    homeData = collectTableData("home-product-table");
+    branchData = collectTableData("branch-product-table");
+  } catch (validationError) {
+    showError(validationError.message);
+    return;
+  }
+  if (homeData.length === 0 && branchData.length === 0) {
+    showError(
+      "Please add at least one Home or Branch product before submitting."
+    );
+    return;
+  }
 
-        if (response.ok) {
-            console.log('Form submitted successfully!');
-            const data = await response.json();
-            console.log(data,"formresponse");
-            const redirectUrl = `/content/travelport/us/en/submitted-data.html?pagePath=${window.location.pathname}&id=${data.id}`;
-			console.log("Redirecting to:", redirectUrl);
-            window.location.href = redirectUrl;
-            
-        } else {
-            const text = await response.text();
-            console.error('Error submitting form:', text);
-        }
-    } catch (error) {
-        console.error('Error submitting form:', error);
+  const csrfToken = await getCsrfToken();
+
+  const payload = {
+    page_path: window.location.pathname,
+    customerName: customerName,
+    products: {
+      home_products: homeData,
+      branch_products: branchData,
+    },
+  };
+
+  try {
+    const response = await fetch("/bin/form/save", {
+      method: "POST",
+      headers: {
+        "CSRF-Token": csrfToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const redirectUrl = `/content/travelport/us/en/submissions.html`;
+      window.open(redirectUrl, "_blank");
     }
+  } catch (error) {
+    console.error("Submit Error:", error);
+  }
 };
 
-
+// ---------------------------
+// SAVE FORM
+// ---------------------------
 const saveForm = async () => {
-    const homeData = collectTableData('home-product-table');
-    const branchData = collectTableData('branch-product-table');
-    const csrfToken = await getCsrfToken();
+  hideError();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const pagePath = urlParams.get("pagePath");
-    const id = urlParams.get("id");
+  const customerName = document.getElementById("customerName").value.trim();
+  if (!customerName) {
+    showError("Customer name is required.");
+    return;
+  }
 
-    const servletUrl = `/bin/form/save?pagePath=${pagePath}&id=${id}`;
-
-    const payload = {
-        page_path: pagePath,
-        id: id,
-        products: {
-            home_products: homeData,
-            branch_products: branchData
-        }
-    };
-
+  let homeData, branchData;
     try {
-        const response = await fetch(servletUrl, {
-            method: 'PUT',
-            headers: {
-                "CSRF-Token": csrfToken,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
+    homeData = collectTableData("home-product-table");
+    branchData = collectTableData("branch-product-table");
+  } catch (validationError) {
+    showError(validationError.message);
+    return;
+  }
+  const csrfToken = await getCsrfToken();
 
-        if (response.ok) {
-            console.log("Form saved successfully!");
-			const data = await response.json();
-            console.log(data,"formresponse");
-            const redirectUrl = `/content/travelport/us/en/submitted-data.html?pagePath=${window.location.pathname}&id=${data.id}`;
-			console.log("Redirecting to:", redirectUrl);
-            window.location.href = redirectUrl;
-        } else {
-            console.error("Save error:", await response.text());
-        }
-    } catch (error) {
-        console.error("Save Exception:", error);
+  if (homeData.length === 0 && branchData.length === 0) {
+    showError(
+      "Please add at least one Home or Branch product before submitting."
+    );
+    return;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const pagePath = "/content/travelport/us/en/forms-info";
+  const id = urlParams.get("formId");
+
+  const servletUrl = `/bin/form/save?pagePath=${pagePath}&id=${id}`;
+
+  const payload = {
+    page_path: pagePath,
+    id: id,
+    products: {
+      home_products: homeData,
+      branch_products: branchData,
+    },
+  };
+
+  try {
+    const response = await fetch(servletUrl, {
+      method: "PUT",
+      headers: {
+        "CSRF-Token": csrfToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const redirectUrl = `/content/travelport/us/en/submissions.html`;
+      window.location.href = redirectUrl;
     }
+  } catch (error) {
+    console.error("Save Error:", error);
+  }
 };
 
 
-// --- Initial Setup ---
+
+// ===============================
+// LOAD INITIAL STATE
+// ===============================
 window.onload = async () => {
-    calculateTotals();
+  calculateTotals();
 
-    // Read query params
-    const urlParams = new URLSearchParams(window.location.search);
-    const pagePath = urlParams.get("pagePath");
-    const id = urlParams.get("id");
+  const urlParams = new URLSearchParams(window.location.search);
+  const id = urlParams.get("formId");
 
-    // ONLY add default H4 when NOT in edit mode
-    if (!pagePath && !id) {
-        const products = await fetchProducts('HOME');
-        const defaultH4 = products.find(p => p.name === 'H4');
-        if (defaultH4) {
-            addRowWithProduct('home-product-table', defaultH4);
-        }
-    }
-
-    const mandatoryRow = document.querySelector('.mandatory-row');
-    if (mandatoryRow) {
-        mandatoryRow.querySelector('.input-discount').addEventListener('input', calculateTotals);
-    }
-
-    const branchSampleRow = document.querySelector('#branch-product-table .table-row');
-    if (branchSampleRow) {
-        branchSampleRow.querySelector('.input-discount').addEventListener('input', calculateTotals);
-    }
+  // Add default H4 only when NEW form
+  if (!id) {
+    const products = await fetchProducts("HOME");
+    const defaultH4 = products.find((p) => p.name === "H4");
+    if (defaultH4) addRowWithProduct("home-product-table", defaultH4);
+  }
 };
 
+// ===============================
+// EDIT MODE: POPULATE DATA
+// ===============================
+document.addEventListener("DOMContentLoaded", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const pagePath = "/content/travelport/us/en/forms-info"
+  const id = urlParams.get("formId");
 
-document.addEventListener("DOMContentLoaded", async function () {
-    const urlParams = new URLSearchParams(window.location.search);
-        const pagePath = urlParams.get("pagePath");
-        const id = urlParams.get("id");
+  const submitBtn = document.getElementById("submitBtn");
+  const saveBtn = document.getElementById("saveBtn");
 
+  if (id) {
+    submitBtn.style.display = "none";
+    saveBtn.style.display = "inline-block";
 
-     const submitBtn = document.getElementById("submitBtn");
-    const saveBtn = document.getElementById("saveBtn");
+    const response = await fetch(
+      `/bin/form/save?pagePath=${pagePath}&id=${id}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
-    if (id) {
-        // Editing scenario
-        submitBtn.style.display = "none";
-        saveBtn.style.display = "inline-block";
-    } else {
-        // New Form scenario
-        submitBtn.style.display = "inline-block";
-        saveBtn.style.display = "none";
-    }
+    const data = await response.json();
 
+    document.getElementById("customerName").value = data.submittedBy || "";
 
-    const servletUrl = `/bin/form/save?pagePath=${pagePath}&id=${id}`;
-   const response = await fetch(servletUrl, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-
-        const data = await response.json();
-    console.log("Loaded data:", data);
-
-    // Fill fields
-    if (document.querySelector("#customerName")) {
-        document.querySelector("#customerName").value = data.submittedBy || "";
-    }
-
-    // Clear existing rows
     document.getElementById("home-product-table").innerHTML = "";
     document.getElementById("branch-product-table").innerHTML = "";
 
-    // Populate tables
     populateProductsTable("home-product-table", data.data.home_products);
     populateProductsTable("branch-product-table", data.data.branch_products);
 
     calculateTotals();
+  } else {
+    submitBtn.style.display = "inline-block";
+    saveBtn.style.display = "none";
+  }
+
+  document.querySelectorAll("td[data-date]").forEach(td => {
+        td.textContent = formatSubmittedDate(td.textContent.trim());
+    });
+
 });
 
-/* Helper for edit mode */
 function populateProductsTable(tableId, products) {
-    const table = document.getElementById(tableId);
-    products.forEach(p => {
-        const row = document.createElement("tr");
-        row.classList.add("table-row");
+  const table = document.getElementById(tableId);
 
-        row.innerHTML = `
+  products.forEach((p) => {
+    const row = document.createElement("tr");
+    row.classList.add("table-row");
+
+    row.innerHTML = `
             <td>
                 <select class="input-product-name">
-                    <option selected value="${p.product_name}|${p.rack_rate}|${p.product_type}">
+                    <option selected value="${p.product_name}|${p.rack_rate}|${
+      p.product_type
+    }">
                         ${p.product_name} (${p.product_type})
                     </option>
                 </select>
             </td>
-            <td><input type="number" value="${p.quantity}" class="input-quantity" data-rack-rate="${p.rack_rate}" oninput="calculateTotals()"></td>
-            <td class="input-rack-rate text-right">${formatCurrency(p.rack_rate)}</td>
-            <td><input type="number" value="${p.discount_percent}" class="input-discount" oninput="calculateTotals()"></td>
-            <td class="total-after-discount text-right">${formatCurrency(p.total_after_discount)}</td>
+
+            <td><input type="number" value="${
+              p.quantity
+            }" class="input-quantity"
+                data-rack-rate="${
+                  p.rack_rate
+                }" oninput="calculateTotals()"></td>
+
+            <td class="input-rack-rate text-right">${formatCurrency(
+              p.rack_rate
+            )}</td>
+            <td><input type="number" value="${
+              p.discount_percent
+            }" class="input-discount" oninput="calculateTotals()"></td>
+            <td class="total-after-discount text-right">${formatCurrency(
+              p.total_after_discount
+            )}</td>
             <td><button onclick="removeRow(this)">Remove</button></td>
         `;
 
-        table.appendChild(row);
-    });
+    table.appendChild(row);
+  });
 }

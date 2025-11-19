@@ -7,10 +7,8 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 import javax.servlet.Servlet;
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 
@@ -28,18 +26,28 @@ public class ProductServlet extends SlingSafeMethodsServlet {
 
     private static final Logger log = LoggerFactory.getLogger(ProductServlet.class);
 
-    @Reference(target = "(&(objectclass=javax.sql.DataSource)(datasource.name=travelport_datasource))")
-    private DataSource dataSource;
+    // 🔥 Update with your actual DB connection details
+    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/travelport";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "Travel@1234";
+
+    // Load MySQL driver (optional for newer JDBC, safe for OSGi)
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
     private Connection getConnection() {
         try {
-            return dataSource.getConnection();
+            return DriverManager.getConnection(JDBC_URL, DB_USER, DB_PASSWORD);
         } catch (SQLException e) {
             log.error("DB Connection Error: {}", e.getMessage());
             return null;
         }
     }
-
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
@@ -69,6 +77,10 @@ public class ProductServlet extends SlingSafeMethodsServlet {
         try (Connection con = getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
 
+            if (con == null) {
+                return "{\"error\":\"DB Connection failed\"}";
+            }
+
             stmt.setString(1, location.toUpperCase());
             ResultSet rs = stmt.executeQuery();
 
@@ -92,4 +104,3 @@ public class ProductServlet extends SlingSafeMethodsServlet {
         }
     }
 }
-

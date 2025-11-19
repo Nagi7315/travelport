@@ -38,6 +38,7 @@ function renderTable(tableId, items, discountId, totalId) {
 async function loadSubmittedData() {
     try {
         // Get params
+        console.log("this js only exceuting")
         const urlParams = new URLSearchParams(window.location.search);
         const pagePath = urlParams.get("pagePath");
         const id = urlParams.get("id");
@@ -59,7 +60,7 @@ async function loadSubmittedData() {
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
         const submittedFormData = await response.json();
-        console.log("Servlet Response:", submittedFormData);
+        console.log("Servlet our Response:", submittedFormData);
 
         // Populate customer name or submittedBy if needed
         document.getElementById("customer-name").textContent = submittedFormData.submittedBy;
@@ -85,7 +86,7 @@ function editRow()   {
     const urlParams = new URLSearchParams(window.location.search);
         const pagePath = urlParams.get("pagePath");
         const id = urlParams.get("id");
-        window.location.href = `/content/travelport/us/en/forms-info.html?pagePath=${pagePath}&id=${id}`;
+        window.location.href = `/content/travelport/us/en/travel-port-form.html?pagePath=${pagePath}&id=${id}`;
 
 }
 function viewDetails(){ alert("View Details coming soon"); }

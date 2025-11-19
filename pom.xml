@@ -57,11 +57,11 @@
             
     <aem.host>localhost</aem.host>
             
-    <aem.port>4504</aem.port>
+    <aem.port>4502</aem.port>
             
     <aem.publish.host>localhost</aem.publish.host>
             
-    <aem.publish.port>4505</aem.publish.port>
+    <aem.publish.port>4503</aem.publish.port>
             
     <sling.user>admin</sling.user>
             
@@ -87,7 +87,7 @@
             
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
             
-    <aem.sdk.api>2025.10.23122.20251023T134343Z-250900</aem.sdk.api>
+    <aem.sdk.api>2025.3.19823.20250304T101418Z-250200</aem.sdk.api>
             
     <aemanalyser.version>1.4.10</aemanalyser.version>
             
