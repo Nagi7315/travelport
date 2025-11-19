@@ -1,0 +1,201 @@
+ 
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEM Adaptive Form Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .form-container {
+            max-width: 1000px;
+        }
+        .form-section {
+            border-left: 4px solid #005A9C; /* AEM Blue Accent */
+        }
+        .table-header th {
+            background-color: #e5e7eb;
+            font-weight: 600;
+            padding: 12px;
+            text-align: left;
+        }
+        .table-row td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+        input[type="number"], input[type="text"], select {
+            border: 1px solid #d1d5db;
+            padding: 6px;
+            border-radius: 6px;
+            width: 100%;
+        }
+        .read-only {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+        .risk-alert {
+            background-color: #fef2f2;
+            border: 1px solid #ef4444;
+            color: #b91c1c;
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 6px;
+        }
+    </style>
+<div class="cmp-form p-4 sm:p-8">
+
+    <div class="form-container mx-auto bg-white shadow-xl rounded-xl p-6 sm:p-10">
+
+        <!-- Header and Status -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+            ${properties.formTitle @ context='text'}
+        </h1>
+
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+
+            <p class="text-lg font-medium text-gray-600">
+                Customer:
+                <span class="text-gray-800 font-bold">
+                    ${properties.customerName}
+                </span>
+            </p>
+
+            <span class="inline-block px-3 py-1 text-sm font-semibold text-blue-800 bg-blue-100 rounded-full">
+                Process Status: ${properties.processStatus}
+            </span>
+        </div>
+
+        <!-- System Summary -->
+        <div id="system-summary" class="bg-gray-50 p-4 rounded-lg mb-8 border border-gray-200">
+            <h2 class="text-xl font-semibold mb-2 text-gray-700">System Summary & Workflow</h2>
+
+            <p class="text-sm mb-1">
+                Overall Blended Discount (All Locations):
+                <span id="blended-discount" class="font-bold text-gray-800">0.0%</span>
+            </p>
+
+            <div id="workflow-alert" class="risk-alert hidden mt-2">
+                <p>
+                    ⚠️ <strong>Workflow Alert:</strong>
+                    Threshold exceeded. Routing to Approvers is required.
+                </p>
+            </div>
+        </div>
+
+        <!-- A. Home Location Section -->
+        <div class="form-section p-4 mb-8 bg-gray-50 rounded-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                A. Home Location: ${properties.homeLocationName}
+            </h2>
+
+            <div class="text-sm text-gray-500 mb-4">
+                *Guidance: Products H1 to H6 are available for selection.*
+            </div>
+
+            <table class="min-w-full table-fixed rounded-lg overflow-hidden">
+                <thead class="table-header">
+                    <tr>
+                        <th class="w-2/6">Product Name</th>
+                        <th class="w-1/12 text-center">Qty</th>
+                        <th class="w-1/6 text-right">Rack Rate (£)</th>
+                        <th class="w-1/6 text-center">Discount %</th>
+                        <th class="w-1/6 text-right">Total After Discount (£)</th>
+                        <th class="w-1/12">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="home-product-table">
+
+                 
+
+                </tbody>
+
+                <tfoot>
+                    <tr class="bg-gray-200 font-bold">
+                        <td colspan="3" class="p-3 text-right">Total (Home)</td>
+                        <td class="p-3 text-center" id="home-total-discount-percent">0.00%</td>
+                        <td class="p-3 text-right" id="home-total-after-discount">£0.00</td>
+                        <td class="p-3"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <button onclick="addRow('home-product-table','HOME')"
+                class="mt-4 px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+                + Add Home Product Row
+            </button>
+        </div>
+
+        <!-- B. Branch Location Section -->
+        <div class="form-section p-4 mb-8 bg-gray-50 rounded-lg">
+
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                B. Branch Location: ${properties.branchLocationName}
+            </h2>
+
+            <div class="text-sm text-gray-500 mb-4">
+                *Guidance: Products B1 to B4 are available for selection.*
+            </div>
+
+            <table class="min-w-full table-fixed rounded-lg overflow-hidden">
+
+                <thead class="table-header">
+                    <tr>
+                        <th class="w-2/6">Product Name</th>
+                        <th class="w-1/12 text-center">Qty</th>
+                        <th class="w-1/6 text-right">Rack Rate (£)</th>
+                        <th class="w-1/6 text-center">Discount %</th>
+                        <th class="w-1/6 text-right">Total After Discount (£)</th>
+                        <th class="w-1/12">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="branch-product-table">
+
+                   
+
+                </tbody>
+
+                <tfoot>
+                    <tr class="bg-gray-200 font-bold">
+                        <td colspan="3" class="p-3 text-right">Total (Branch)</td>
+                        <td class="p-3 text-center" id="branch-total-discount-percent">0.00%</td>
+                        <td class="p-3 text-right" id="branch-total-after-discount">£0.00</td>
+                        <td class="p-3"></td>
+                    </tr>
+                </tfoot>
+
+            </table>
+
+            <button onclick="addRow('branch-product-table','BRANCH')"
+                class="mt-4 px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+                + Add Branch Product Row
+            </button>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-start space-x-4 pt-6 border-t border-gray-200">
+
+            <button id="submitBtn" onclick="submitForm()" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-lg hover:bg-green-700 transition duration-150">
+                Submit for Approval
+            </button>
+
+            <button id="saveBtn" onclick="saveForm()" class="px-6 py-3 bg-gray-400 text-white font-semibold rounded-lg shadow-lg hover:bg-gray-500 transition duration-150">
+                Save
+            </button>
+
+        </div>
+
+    </div>
+    
+    <sly data-sly-use.clientLib="/libs/granite/sightly/templates/clientlib.html" />
+<sly data-sly-call="${clientLib.js @ categories='travelport.clientlib'}"></sly>
+
+</div>
+
+
+   

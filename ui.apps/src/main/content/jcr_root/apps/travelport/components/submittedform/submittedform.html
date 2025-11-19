@@ -1,0 +1,74 @@
+<div class="cmp-submitted-form">
+
+    <div class="form-container">
+
+        <!-- Header -->
+        <h1 class="form-header">Submitted Form Details</h1>
+
+        <!-- Customer + Status Row -->
+        <div class="customer-status">
+            <div class="customer-label">
+                Customer: <span id="customer-name" data-i18n="customer"></span>
+            </div>
+            <span id="process-status" class="status-badge">Submitted</span>
+        </div>
+
+        <!-- A. Home Location -->
+        <div class="table-wrapper">
+            <h2 class="section-title">A. Home Location</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-right">Rack Rate</th>
+                        <th class="text-center">Discount %</th>
+                        <th class="text-right">Total</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="submitted-home-table"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right font-bold">Total (Home)</td>
+                        <td class="text-center" id="submitted-home-total-discount">0.00%</td>
+                        <td class="text-right font-bold" id="submitted-home-total-after">£0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- B. Branch Location -->
+        <div class="table-wrapper">
+            <h2 class="section-title">B. Branch Location</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-right">Rack Rate</th>
+                        <th class="text-center">Discount %</th>
+                        <th class="text-right">Total</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="submitted-branch-table"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right font-bold">Total (Branch)</td>
+                        <td class="text-center" id="submitted-branch-total-discount">0.00%</td>
+                        <td class="text-right font-bold" id="submitted-branch-total-after">£0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Load ClientLibs (AEM way) -->
+    <sly data-sly-use.clientLib="${'/libs/granite/sightly/templates/clientlib.html'}"/>
+    <sly data-sly-call="${clientLib.css @ categories='travelport.submitteddata'}"/>
+    <sly data-sly-call="${clientLib.js @ categories='travelport.submitteddata'}"/>
+</div>
