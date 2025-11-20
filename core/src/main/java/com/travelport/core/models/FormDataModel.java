@@ -14,6 +14,8 @@ public class FormDataModel {
 
     private String inititor;
 
+    private String blended_discount;
+
     private String[] approvers;
 
     private String[] approved;
@@ -113,6 +115,15 @@ public class FormDataModel {
 
     public void setPendingApprovalFrom(String pendingApprovalFrom) {
         this.pendingApprovalFrom = pendingApprovalFrom;
+    }
+
+    
+    public String getBlended_discount() {
+        return blended_discount;
+    }
+
+    public void setBlended_discount(String blended_discount) {
+        this.blended_discount = blended_discount;
     }
 
     

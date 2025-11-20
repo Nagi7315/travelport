@@ -2,6 +2,7 @@ package com.travelport.core.servlets;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.travelport.core.services.EmailSenderService;
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -10,6 +11,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -27,6 +29,9 @@ import java.util.List;
         }
 )
 public class FormApproveServlet extends SlingAllMethodsServlet {
+
+    @Reference
+    EmailSenderService emailSenderService;
 
     @Override
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
@@ -104,6 +109,7 @@ public class FormApproveServlet extends SlingAllMethodsServlet {
             }
 
             Calendar now = Calendar.getInstance();
+            String initiatorMail = "travelport16@gmail.com";
 
             // Handle APPROVE action
             if ("APPROVE".equalsIgnoreCase(action)) {
@@ -118,12 +124,28 @@ public class FormApproveServlet extends SlingAllMethodsServlet {
                         // Only one approver
                         subProps.put("status", "APPROVED_FINAL");
                     } else if ("Pending".equalsIgnoreCase(approver2Field)) {
+
                         // Two approvers
                         subProps.put("status", "PENDING_APPROVER2");
                         Resource a2 = submission.getChild("approvers/approver2");
                         if (a2 != null) {
                             a2.adaptTo(ModifiableValueMap.class).put("status", "PENDING");
                         }
+
+                        String subjectInitiator = "Approval 1 Approved";
+                        String bodyInitiator = "Hello,\n\n"
+                                + "Your request has been approved by Approver 1.\n"
+                                + "It is now moving to the next approval stage.\n\n"
+                                + "Thank you.\nTravelport Team";
+                        emailSenderService.sendEmail(initiatorMail,subjectInitiator,bodyInitiator);
+
+                        String secondApproverMail = "kevensmith.travelport@gmail.com";
+                        String subjectApprover2 = "Action Required: Approval 2 Needed";
+                        String bodyApprover2 = "Hello,\n\n"
+                                + "A request has been approved by Approver 1 and now needs your approval.\n"
+                                + "Please review and take action.\n\n"
+                                + "Thank you.\nTravelport Team";
+                        emailSenderService.sendEmail(secondApproverMail,subjectApprover2,bodyApprover2);
                     } else {
                         // fallback
                         subProps.put("status", "APPROVED_FINAL");
@@ -141,6 +163,15 @@ public class FormApproveServlet extends SlingAllMethodsServlet {
                 if (decisionDate != null) ap.put("decisionDate", decisionDate);
 
                 subProps.put("status", "REJECTED");
+
+                String subjectInitiatorReject = "Request Rejected by Approver";
+
+                String bodyInitiatorReject = "Hello,\n\n"
+                        + "Your request has been rejected by Approver 1.\n"
+                        + "Please review the comments and make any necessary changes.\n\n"
+                        + "Thank you.\nTravelport Team";
+                emailSenderService.sendEmail(initiatorMail,subjectInitiatorReject,bodyInitiatorReject);
+
             } else {
                 response.setStatus(400);
                 out.addProperty("error", "Invalid action: " + action);
@@ -150,7 +181,7 @@ public class FormApproveServlet extends SlingAllMethodsServlet {
 
             rr.commit();
 
-            out.addProperty("message", "Approval updated successfully");
+            out.addProperty("message", "Appr oval updated successfully");
             out.addProperty("finalStatus", subProps.get("status", ""));
 
             response.getWriter().write(out.toString());

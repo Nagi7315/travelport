@@ -35,16 +35,21 @@
                                 <li>Keven Smith</li>
                             </ul>
                         </td>
+                    
+
                         <td>
-                            <ul class="no-bullets">
-                                <li data-sly-repeat.approvedUser="${data.approved}">${approvedUser}</li>
+                            <ul data-sly-list.approvedUser="${data.approvers}" class="no-bullets">
+                                <li >${approvedUser}</li>
                             </ul>
                         </td>
-                        <td>${data.pendingApprovalFrom}</td>
+
+                        <td class="text-center" data-sly-test="${data.pendingApprovalFrom}">${data.pendingApprovalFrom}</td>
+                        <td class="text-center" data-sly-test="${!data.pendingApprovalFrom}">—</td>
+
                         
-                         <td class="text-center">
-                            <a href="${data.editlink}" class="btn btn-edit">Edit</a>
-                            <a href="${data.detailViewLink}" class="btn btn-view">View</a>
+                         <td class="flex">
+                            <a href="${data.editlink}" target="_blank" class="btn btn-edit">Edit</a>
+                            <a href="${data.detailViewLink}" target="_blank"  class="btn btn-view">View</a>
                         </td>
                     </tr>
                 </tbody>

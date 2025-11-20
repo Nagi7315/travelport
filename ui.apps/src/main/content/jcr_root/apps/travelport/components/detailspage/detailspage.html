@@ -66,6 +66,7 @@
                 <h2 class="text-2xl font-semibold text-gray-900">Branch Locations</h2>
                 <span id="branch-count-chip" class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold">0 Branches</span>
             </div>
+            <p id="branch-summary" class="text-sm text-gray-600 mb-4">—</p>
             <div id="branch-locations-container" class="space-y-6">
                 <div class="text-sm text-gray-500">Select a case to load the submitted branch configurations.</div>
             </div>
@@ -104,15 +105,12 @@
                         </div>
                     </div>
                     <p id="approver1-trigger" class="text-sm text-gray-500 mb-4">Awaiting routing trigger.</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div class="grid mb-4">
                         <div>
                             <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Comments</label>
                             <input id="approver1-name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add comments" disabled>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Decision Date</label>
-                            <input id="approver1-date" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" disabled>
-                        </div>
+                        
                     </div>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                         <button id="approver1-approve-btn"  data-approver="approver1"  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver1', 'approve','John Wick')" disabled>Approve</button>
@@ -125,7 +123,7 @@
                 <div id="approver2-card" class="border border-gray-200 rounded-lg p-5 bg-gray-50">
                     <div class="flex items-center justify-between mb-3">
                         <div>
-                            <h3 class="text-xl font-semibold text-gray-900">Keven smith</h3>
+                            <h3 class="text-xl font-semibold text-gray-900">Keven Smith</h3>
                             <p class="text-sm text-gray-500">Activated for extreme blended discounts.</p>
                         </div>
                         <span id="approver2-status" class="badge bg-gray-200 text-gray-700">Not Required</span>
@@ -141,15 +139,12 @@
                         </div>
                     </div>
                     <p id="approver2-trigger" class="text-sm text-gray-500 mb-4">Awaiting routing trigger.</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div class="grid mb-4">
                         <div>
                             <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Comments</label>
                             <input id="approver2-name" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add comments" disabled>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1">Decision Date</label>
-                            <input id="approver2-date" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" disabled>
-                        </div>
+                        
                     </div>
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                         <button id="approver2-approve-btn"  data-approver="approver2"  class="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" onclick="handleApprovalAction('approver2', 'approve','Keven Smith')" disabled>Approve</button>

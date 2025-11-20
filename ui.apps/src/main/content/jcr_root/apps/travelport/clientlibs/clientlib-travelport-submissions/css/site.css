@@ -280,3 +280,6 @@ body {
     padding: 0;    
     margin: 0;        
 }
+.cmp-link__screen-reader-only {
+    display: none !important;
+}

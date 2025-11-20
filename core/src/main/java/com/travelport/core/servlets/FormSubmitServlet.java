@@ -1,12 +1,14 @@
 package com.travelport.core.servlets;
 
 import com.google.gson.*;
+import com.travelport.core.services.EmailSenderService;
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.*;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -22,6 +24,9 @@ import java.util.*;
         }
 )
 public class FormSubmitServlet extends SlingAllMethodsServlet {
+
+    @Reference
+    EmailSenderService emailSenderService;
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
@@ -118,6 +123,15 @@ public class FormSubmitServlet extends SlingAllMethodsServlet {
             return;
         }
 
+        if (!jsonObject.has("blended_discount")) {
+            response.setStatus(400);
+            out.addProperty("error", "Missing blended_discount in request JSON");
+            response.getWriter().write(out.toString());
+            return;
+        }
+
+        String blended_discount = jsonObject.get("blended_discount").getAsString();
+
         JsonObject productsObj = jsonObject.getAsJsonObject("products");
         String productsJsonString = productsObj.toString();
 
@@ -141,26 +155,26 @@ public class FormSubmitServlet extends SlingAllMethodsServlet {
             dataProps.put("submittedBy",
                     request.getRemoteUser() != null ? request.getRemoteUser() : "anonymous");
             dataProps.put("submittedOn", Calendar.getInstance());
+            dataProps.put("blended_discount", blended_discount);
 
             Resource dataNode = rr.create(pageContent, randomId, dataProps);
 
             Resource approvers = rr.create(dataNode, "approvers",
                     Collections.singletonMap("jcr:primaryType", "nt:unstructured"));
+            String approverName = "John Wick";
 
             // approver1 node
             rr.create(approvers, "approver1", new HashMap<String, Object>() {{
                 put("jcr:primaryType", "nt:unstructured");
                 put("status", "PENDING");
-                put("comments", "");
-                put("actor", "approver1");
+                put("actor", approverName);
             }});
 
             // approver2 node
             rr.create(approvers, "approver2", new HashMap<String, Object>() {{
                 put("jcr:primaryType", "nt:unstructured");
                 put("status", "WAITING");
-                put("comments", "");
-                put("actor", "approver2");
+                put("actor", "Keven Smith");
             }});
 
             rr.commit();
@@ -170,6 +184,23 @@ public class FormSubmitServlet extends SlingAllMethodsServlet {
             out.addProperty("message", "Form saved successfully");
 
             response.getWriter().write(out.toString());
+
+            // Prepare email messages
+            String initiator = "Travelport User";
+
+            String initiatorMsg =
+                    "Hi " + initiator + ",\n\n" +
+                            "Your request has been successfully submitted and has been sent to"+ approverName+ "review.\n\n" +
+                            "Thank you,\nTravelport";
+
+            emailSenderService.sendEmail("travelport16@gmail.com","Your Request Has Been Successfully Submitted", initiatorMsg);
+
+            String approverMsg =
+                    "Hi " + approverName + ",\n\n" +
+                            "A new request has been submitted and requires your approval.\n\n" +
+                            "Regards,\nTravelport";
+
+            emailSenderService.sendEmail("johnwick.travelport@gmail.com","New Request Awaiting Your Approval", approverMsg);
 
         } catch (Exception e) {
             response.setStatus(500);

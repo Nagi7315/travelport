@@ -165,34 +165,38 @@ const addRowWithProduct = (tableId, product) => {
   newRow.innerHTML = `
         <td>
             <select class="input-product-name" onchange="updateRow(this)">
-                <option selected value="${product.name}|${product.rate}|${
-    product.type
-  }">
+                <option selected value="${product.name}|${product.rate}|${product.type}">
                     ${product.name} (${product.type})
                 </option>
             </select>
         </td>
-        <td><input type="number" value="1" min="1"
+        <td>
+            <input type="number" value="${isFixed ? 1 : 1}" min="1"
             class="input-quantity text-center"
             data-rack-rate="${product.rate}"
             data-fixed="${isFixed}"
-            ${!isFixed ? "readonly" : ""} oninput="calculateTotals()"></td>
+            ${isFixed ? "readonly" : ""} 
+            oninput="calculateTotals()">
+        </td>
 
-        <td class="input-rack-rate text-right">${formatCurrency(
-          product.rate
-        )}</td>
+        <td class="input-rack-rate text-right">${formatCurrency(product.rate)}</td>
 
-        <td><input type="number" min="0" max="100" value="0"
-            class="input-discount text-center" oninput="calculateTotals()"></td>
+        <td>
+            <input type="number" min="0" max="100" value="0"
+            class="input-discount text-center" oninput="calculateTotals()">
+        </td>
 
         <td class="total-after-discount text-right">0.00</td>
 
-        <td><button onclick="removeRow(this)" class="text-red-600 hover:text-red-800 font-medium">Remove</button></td>
+        <td>
+            <button onclick="removeRow(this)" class="text-red-600 hover:text-red-800 font-medium">Remove</button>
+        </td>
     `;
 
   tableBody.appendChild(newRow);
   calculateTotals();
 };
+
 
 const addRow = async (tableId, locationType) => {
   const tableBody = document.getElementById(tableId);
@@ -237,8 +241,6 @@ const removeRow = (button) => {
 
 const updateRow = async (selectElement) => {
   const row = selectElement.closest("tr");
-  const tableId = row.parentElement.id;
-
   const parts = selectElement.value.split("|");
   if (parts.length !== 3) return;
 
@@ -254,32 +256,11 @@ const updateRow = async (selectElement) => {
   rackRateElement.textContent = formatCurrency(rate);
 
   if (isFixed) {
-    quantityInput.removeAttribute("readonly");
-  } else {
+    quantityInput.value = 1; // fixed quantity
     quantityInput.setAttribute("readonly", true);
-    quantityInput.value = 1;
+  } else {
+    quantityInput.removeAttribute("readonly");
   }
-
-  // Re-filter available dropdown options
-  const table = document.getElementById(tableId);
-  const allSelected = [...table.querySelectorAll(".input-product-name")].map(
-    (s) => s.value.split("|")[0]
-  );
-
-  const locationType = tableId.includes("home") ? "HOME" : "BRANCH";
-
-  const optionsHtml = await getProductOptions(
-    locationType,
-    allSelected.filter((x) => x !== name)
-  );
-
-  // Rebuild dropdown but keep selected at top
-  selectElement.innerHTML = `
-        <option selected value="${name}|${rate}|${type}">
-            ${name} (${type})
-        </option>
-        ${optionsHtml}
-    `;
 
   calculateTotals();
 };
@@ -383,6 +364,25 @@ const submitForm = async () => {
 
   const csrfToken = await getCsrfToken();
 
+
+    const homeTotals = calculateLocationTotals(
+    "home-product-table",
+    "home-total-discount-percent",
+    "home-total-after-discount"
+  );
+  const branchTotals = calculateLocationTotals(
+    "branch-product-table",
+    "branch-total-discount-percent",
+    "branch-total-after-discount"
+  );
+
+
+  const totalRackValue = homeTotals.totalRackValue + branchTotals.totalRackValue;
+  const totalDiscountedValue = homeTotals.totalDiscountedValue + branchTotals.totalDiscountedValue;
+  const blendedDiscount = totalRackValue > 0
+    ? ((totalRackValue - totalDiscountedValue) / totalRackValue) * 100
+    : 0;
+
   const payload = {
     page_path: window.location.pathname,
     customerName: customerName,
@@ -390,6 +390,7 @@ const submitForm = async () => {
       home_products: homeData,
       branch_products: branchData,
     },
+    blended_discount: blendedDiscount.toFixed(2)
   };
 
   try {
@@ -403,8 +404,11 @@ const submitForm = async () => {
     });
 
     if (response.ok) {
+       const data = await response.json();
+       console.log("Servlet Response:", data);
       const redirectUrl = `/content/travelport/us/en/submissions.html`;
-      window.open(redirectUrl, "_blank");
+      window.location.href = `/content/travelport/us/en/submissions.html`;
+      console.log("redirected")
     }
   } catch (error) {
     console.error("Submit Error:", error);
@@ -543,39 +547,42 @@ function populateProductsTable(tableId, products) {
   const table = document.getElementById(tableId);
 
   products.forEach((p) => {
+    const isFixed = p.product_type === "FIXED";
+
     const row = document.createElement("tr");
     row.classList.add("table-row");
 
     row.innerHTML = `
             <td>
                 <select class="input-product-name">
-                    <option selected value="${p.product_name}|${p.rack_rate}|${
-      p.product_type
-    }">
+                    <option selected value="${p.product_name}|${p.rack_rate}|${p.product_type}">
                         ${p.product_name} (${p.product_type})
                     </option>
                 </select>
             </td>
 
-            <td><input type="number" value="${
-              p.quantity
-            }" class="input-quantity"
-                data-rack-rate="${
-                  p.rack_rate
-                }" oninput="calculateTotals()"></td>
+            <td>
+                <input type="number" value="${p.quantity || 1}" 
+                class="input-quantity text-center"
+                data-rack-rate="${p.rack_rate}" 
+                data-fixed="${isFixed}"
+                ${isFixed ? "readonly" : ""} 
+                oninput="calculateTotals()">
+            </td>
 
-            <td class="input-rack-rate text-right">${formatCurrency(
-              p.rack_rate
-            )}</td>
-            <td><input type="number" value="${
-              p.discount_percent
-            }" class="input-discount" oninput="calculateTotals()"></td>
-            <td class="total-after-discount text-right">${formatCurrency(
-              p.total_after_discount
-            )}</td>
+            <td class="input-rack-rate text-right">${formatCurrency(p.rack_rate)}</td>
+
+            <td>
+                <input type="number" value="${p.discount_percent || 0}" min="0" max="100"
+                class="input-discount text-center" oninput="calculateTotals()">
+            </td>
+
+            <td class="total-after-discount text-right">${formatCurrency(p.total_after_discount)}</td>
+
             <td><button onclick="removeRow(this)">Remove</button></td>
         `;
 
     table.appendChild(row);
   });
 }
+

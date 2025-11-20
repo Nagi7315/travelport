@@ -51,9 +51,15 @@ function renderHome(homeItems) {
 
     const total = homeItems.reduce((sum, i) => sum + i.total_after_discount, 0);
     const avgDiscount = homeItems.reduce((sum, i) => sum + i.discount_percent, 0) / homeItems.length;
+    const totalRackRate = homeItems.reduce((sum, i) => sum + i.rack_rate, 0);
+
+    const blendedDiscount = totalRackRate > 0
+        ? ((totalRackRate - total) / totalRackRate) * 100
+        : 0;
+
 
     document.getElementById("home-summary").textContent =
-        `Avg Discount: ${avgDiscount.toFixed(2)}% · Total: ${formatCurrency(total)}`;
+        `Avg Discount: ${avgDiscount.toFixed(2)}% · Total: ${formatCurrency(total)} · Blended Discount: ${blendedDiscount.toFixed(2)}%`;
 
     container.innerHTML = createTable(homeItems);
 }
@@ -85,6 +91,25 @@ function renderBranches(branchItems) {
 
         container.appendChild(card);
     });
+
+
+   
+
+        const total = branchItems.reduce((sum, i) => sum + i.total_after_discount, 0);
+    const avgDiscount = branchItems.reduce((sum, i) => sum + i.discount_percent, 0) / branchItems.length;
+    const totalRackRate = branchItems.reduce((sum, i) => sum + i.rack_rate, 0);
+
+    const blendedDiscount = totalRackRate > 0
+        ? ((totalRackRate - total) / totalRackRate) * 100
+        : 0;
+
+
+    document.getElementById("branch-summary").textContent =
+        `Avg Discount: ${avgDiscount.toFixed(2)}% · Total: ${formatCurrency(total)} · Blended Discount: ${blendedDiscount.toFixed(2)}%`;
+
+    // container.innerHTML = createTable(branchItems);
+
+
 }
 
 /* -------------------- DISCOUNT CALCULATIONS -------------------- */
